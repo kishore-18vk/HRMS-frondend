@@ -214,3 +214,21 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg-mai
   .job-stats { margin-left: 0; width: 100%; justify-content: space-between; }
   .settings-grid { grid-template-columns: 1fr; }
 }
+
+/* Modal Styles */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal { background: white; border-radius: 12px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid var(--border); }
+.modal-header h2 { font-size: 1.25rem; }
+.close-btn { background: none; border: none; cursor: pointer; padding: 0.5rem; color: var(--text-secondary); }
+.modal form { padding: 1.5rem; }
+.form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.modal .form-group { margin-bottom: 1rem; }
+.modal .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.modal .form-group input, .modal .form-group select, .modal .form-group textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; }
+.modal .form-group input:focus, .modal .form-group select:focus, .modal .form-group textarea:focus { outline: none; border-color: var(--primary); }
+.checkbox-group label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+.checkbox-group input[type="checkbox"] { width: 18px; height: 18px; }
+.form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+.loading { display: flex; align-items: center; justify-content: center; padding: 3rem; font-size: 1.125rem; color: var(--text-secondary); }
+.header-actions { display: flex; gap: 0.75rem; }

@@ -1,23 +1,30 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, Lock } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (login(username, password)) {
+    setError('');
+    setLoading(true);
+
+    const result = await login(username, password);
+
+    if (result.success) {
       navigate('/dashboard');
     } else {
-      setError('Invalid credentials');
+      setError(result.error || 'Invalid credentials');
     }
+    setLoading(false);
   };
 
   return (
@@ -70,9 +77,9 @@ const Login = () => {
 
             {error && <div className="error-message">{error}</div>}
 
-            <button type="submit" className="login-btn">
-              <Lock size={16} />
-              Secure Sign-in
+            <button type="submit" className="login-btn" disabled={loading}>
+              <LogIn size={16} />
+              {loading ? 'Signing in...' : 'Secure Sign-in'}
             </button>
           </form>
 

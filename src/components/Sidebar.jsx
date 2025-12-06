@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, Clock, Calendar, DollarSign, 
-  Briefcase, Award, FileText, Settings, ChevronDown,
+import {
+  LayoutDashboard, Users, Clock, Calendar, DollarSign,
+  Briefcase, Award, FileText, Settings, CalendarDays,
   UserPlus, ClipboardList, Building
 } from 'lucide-react';
 
@@ -12,6 +12,7 @@ const menuItems = [
   { path: '/onboarding', icon: ClipboardList, label: 'Onboarding' },
   { path: '/attendance', icon: Clock, label: 'Attendance' },
   { path: '/leave', icon: Calendar, label: 'Leave' },
+  { path: '/holidays', icon: CalendarDays, label: 'Holidays' },
   { path: '/payroll', icon: DollarSign, label: 'Payroll' },
   { path: '/assets', icon: Briefcase, label: 'Assets' },
   { path: '/performance', icon: Award, label: 'Performance' },

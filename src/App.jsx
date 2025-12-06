@@ -9,6 +9,7 @@ import Leave from './pages/Leave';
 import Recruitment from './pages/Recruitment';
 import Payroll from './pages/Payroll';
 import Settings from './pages/Settings';
+import Holidays from './pages/Holidays';
 import './App.css';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
             <Route path="onboarding" element={<Dashboard />} />
             <Route path="attendance" element={<Attendance />} />
             <Route path="leave" element={<Leave />} />
+            <Route path="holidays" element={<Holidays />} />
             <Route path="payroll" element={<Payroll />} />
             <Route path="assets" element={<Dashboard />} />
             <Route path="performance" element={<Dashboard />} />
