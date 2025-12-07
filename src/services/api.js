@@ -199,6 +199,8 @@ export const authAPI = {
     return handleResponse(response);
   },
 
+
+  
   logout: async () => {
     const refreshToken = localStorage.getItem('refresh_token');
     try {
@@ -257,6 +259,43 @@ export const employeeAPI = {
       method: 'DELETE',
       headers: getAuthHeaders(),
       body: JSON.stringify({ id })
+    });
+    return handleResponse(response);
+  }
+};
+
+// ============ ONBOARDING API ============
+export const onboardingAPI = {
+  getTasks: async (employeeId = '') => {
+    const query = employeeId ? `?employee_id=${employeeId}` : '';
+    const response = await fetch(`${API_BASE_URL}/onboarding/${query}`, { 
+      headers: getAuthHeaders() 
+    });
+    return handleResponse(response);
+  },
+
+  getNewHires: async () => {
+    const response = await fetch(`${API_BASE_URL}/onboarding/new_hires/`, { 
+      headers: getAuthHeaders() 
+    });
+    return handleResponse(response);
+  },
+
+  updateTask: async (id, data) => {
+    const response = await fetch(`${API_BASE_URL}/onboarding/${id}/`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  },
+
+  // === ADD THIS NEW FUNCTION ===
+  createTask: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/onboarding/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
     });
     return handleResponse(response);
   }
