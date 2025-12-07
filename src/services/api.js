@@ -9,6 +9,46 @@ const getAuthHeaders = () => {
   };
 };
 
+// ============ RECRUITMENT API ============
+export const recruitmentAPI = {
+  // Get all jobs
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/recruitment/jobs/`, { 
+      headers: getAuthHeaders() 
+    });
+    return handleResponse(response);
+  },
+
+  // Get dashboard stats
+  getStats: async () => {
+    const response = await fetch(`${API_BASE_URL}/recruitment/jobs/dashboard_stats/`, { 
+      headers: getAuthHeaders() 
+    });
+    return handleResponse(response);
+  },
+
+  // Create a new job
+  create: async (jobData) => {
+    const response = await fetch(`${API_BASE_URL}/recruitment/jobs/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(jobData)
+    });
+    return handleResponse(response);
+  },
+
+  // Delete a job
+  delete: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/recruitment/jobs/${id}/`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    // Django REST Framework returns 204 No Content on success, which isn't valid JSON
+    if (response.status === 204) return true;
+    return handleResponse(response);
+  }
+};
+
 // ============ IMPROVED ERROR HANDLER & AUTO LOGOUT ============
 const handleResponse = async (response) => {
   // 1. Check if response is actually JSON
