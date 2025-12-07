@@ -301,6 +301,43 @@ export const onboardingAPI = {
   }
 };
 
+// ============ ASSETS API ============
+export const assetsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/assets/inventory/`, { headers: getAuthHeaders() });
+    return handleResponse(response);
+  },
+  
+  getStats: async () => {
+    const response = await fetch(`${API_BASE_URL}/assets/inventory/category_stats/`, { headers: getAuthHeaders() });
+    return handleResponse(response);
+  },
+
+  getRequests: async () => {
+    const response = await fetch(`${API_BASE_URL}/assets/requests/`, { headers: getAuthHeaders() });
+    return handleResponse(response);
+  },
+
+  createRequest: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/assets/requests/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  },
+
+  // Approve/Reject logic
+  updateRequestStatus: async (id, status) => {
+    const response = await fetch(`${API_BASE_URL}/assets/requests/${id}/update_status/`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status })
+    });
+    return handleResponse(response);
+  }
+};
+
 // ============ HOLIDAY API ============
 export const holidayAPI = {
   getAll: async () => {
