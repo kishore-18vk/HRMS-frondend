@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, CheckCircle, XCircle, Clock, X } from 'lucide-react';
-import { leaveAPI } from '../services/api'; // Ensure this path is correct
+import { Plus, CheckCircle, XCircle, Clock, X, Calendar, Sparkles } from 'lucide-react';
+import { leaveAPI } from '../services/api';
 
 const Leave = () => {
   // ============ STATE ============
@@ -95,10 +95,10 @@ const Leave = () => {
 
   // ============ RENDER ============
   return (
-    <div className="leave-page">
+    <div className="leave-page page-content">
       <div className="page-header">
         <div>
-          <h1>Leave Management</h1>
+          <h1><Calendar size={28} /> Leave Management</h1>
           <p>Manage employee leave requests</p>
         </div>
         <button className="btn-primary" onClick={() => setShowModal(true)}>
@@ -106,18 +106,33 @@ const Leave = () => {
         </button>
       </div>
 
-      <div className="leave-stats">
-        <div className="leave-stat-card" style={{ borderLeftColor: '#f59e0b' }}>
-          <h3>{stats.pending}</h3>
-          <p>Pending Requests</p>
+      <div className="vortex-stats-row">
+        <div className="vortex-stat-item" style={{ '--stat-color': '#f59e0b' }}>
+          <div className="vortex-stat-icon bg-yellow">
+            <Clock size={22} />
+          </div>
+          <div className="vortex-stat-info">
+            <h3>{stats.pending}</h3>
+            <p>Pending Requests</p>
+          </div>
         </div>
-        <div className="leave-stat-card" style={{ borderLeftColor: '#22c55e' }}>
-          <h3>{stats.approved}</h3>
-          <p>Approved Requests</p>
+        <div className="vortex-stat-item" style={{ '--stat-color': '#22c55e' }}>
+          <div className="vortex-stat-icon bg-green">
+            <CheckCircle size={22} />
+          </div>
+          <div className="vortex-stat-info">
+            <h3>{stats.approved}</h3>
+            <p>Approved Requests</p>
+          </div>
         </div>
-        <div className="leave-stat-card" style={{ borderLeftColor: '#ef4444' }}>
-          <h3>{stats.rejected}</h3>
-          <p>Rejected Requests</p>
+        <div className="vortex-stat-item" style={{ '--stat-color': '#ef4444' }}>
+          <div className="vortex-stat-icon bg-red">
+            <XCircle size={22} />
+          </div>
+          <div className="vortex-stat-info">
+            <h3>{stats.rejected}</h3>
+            <p>Rejected Requests</p>
+          </div>
         </div>
       </div>
 
@@ -191,21 +206,21 @@ const Leave = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>New Leave Request</h3>
+              <h3><Sparkles size={18} /> New Leave Request</h3>
               <button className="close-btn" onClick={() => setShowModal(false)}>
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Employee ID (Optional)</label>
-                <input 
-                  type="text" 
-                  name="employee" 
-                  value={formData.employee} 
-                  onChange={handleInputChange} 
-                  placeholder="Leave empty to auto-fill" 
+                <input
+                  type="text"
+                  name="employee"
+                  value={formData.employee}
+                  onChange={handleInputChange}
+                  placeholder="Leave empty to auto-fill"
                 />
               </div>
 
@@ -235,7 +250,7 @@ const Leave = () => {
                 <textarea name="reason" rows="3" value={formData.reason} onChange={handleInputChange} placeholder="Describe the reason..." required></textarea>
               </div>
 
-              <div className="modal-actions">
+              <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn-primary">Submit Request</button>
               </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Laptop, Monitor, Smartphone, Headphones, Key, Package, Plus, CheckCircle, Clock, X } from 'lucide-react';
+import { Laptop, Monitor, Smartphone, Headphones, Key, Package, Plus, CheckCircle, Clock, X, ChevronRight, Sparkles } from 'lucide-react';
 import { assetsAPI, employeeAPI } from '../services/api';
 
 const Assets = () => {
@@ -8,11 +8,13 @@ const Assets = () => {
   const [stats, setStats] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [requestForm, setRequestForm] = useState({ employee: '', asset_type: 'Laptop', reason: '' });
   const [employees, setEmployees] = useState([]);
+
+  const categoryColors = ['#7c3aed', '#06b6d4', '#f43f5e', '#f97316'];
 
   // Fetch Data
   useEffect(() => {
@@ -71,28 +73,30 @@ const Assets = () => {
   return (
     <div className="assets-page page-content">
       {/* Header */}
-      <div className="assets-header flex justify-between items-center mb-6">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold">🖥️ Assets</h1>
-          <p className="text-gray-500">Manage your assigned assets and requests</p>
+          <h1><Package size={28} /> Assets</h1>
+          <p>Manage your assigned assets and requests</p>
         </div>
-        <button className="btn-primary flex items-center gap-2" onClick={() => setIsModalOpen(true)}>
+        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
           <Plus size={18} /> Request Asset
         </button>
       </div>
 
       {/* Categories Stats */}
-      <div className="asset-categories grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        {stats.map(cat => {
+      <div className="vortex-stats-row">
+        {stats.map((cat, index) => {
           const Icon = getIcon(cat.name);
+          const colors = ['#7c3aed', '#06b6d4', '#f43f5e', '#f97316'];
+          const color = colors[index % colors.length];
           return (
-            <div key={cat.id} className="asset-cat-card bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
-              <div className="cat-icon p-3 rounded-lg" style={{ background: `${cat.color}20`, color: cat.color }}>
-                <Icon size={28} />
+            <div key={cat.id} className="vortex-stat-item" style={{ '--stat-color': color }}>
+              <div className="vortex-stat-icon" style={{ background: `${color}20`, color: color }}>
+                <Icon size={24} />
               </div>
-              <div>
-                <h3 className="text-xl font-bold">{cat.count}</h3>
-                <p className="text-gray-500 text-sm">{cat.name}</p>
+              <div className="vortex-stat-info">
+                <h3>{cat.count}</h3>
+                <p>{cat.name}</p>
               </div>
             </div>
           );
@@ -100,74 +104,79 @@ const Assets = () => {
       </div>
 
       {/* Tabs */}
-      <div className="assets-tabs flex gap-6 border-b border-gray-200 mb-6">
-        <button className={`pb-2 ${activeTab === 'my-assets' ? 'border-b-2 border-indigo-500 text-indigo-600 font-bold' : 'text-gray-500'}`} onClick={() => setActiveTab('my-assets')}>All Assets</button>
-        <button className={`pb-2 ${activeTab === 'requests' ? 'border-b-2 border-indigo-500 text-indigo-600 font-bold' : 'text-gray-500'}`} onClick={() => setActiveTab('requests')}>Requests</button>
+      <div className="vortex-tabs">
+        <button className={`vortex-tab ${activeTab === 'my-assets' ? 'active' : ''}`} onClick={() => setActiveTab('my-assets')}>All Assets</button>
+        <button className={`vortex-tab ${activeTab === 'requests' ? 'active' : ''}`} onClick={() => setActiveTab('requests')}>Requests</button>
       </div>
 
-      {loading ? <p className="text-center p-8 text-gray-500">Loading...</p> : (
+      {loading ? <div className="loading"><div className="loader"></div></div> : (
         <>
           {activeTab === 'my-assets' ? (
-            <div className="my-assets-grid grid grid-cols-1 md:grid-cols-2 gap-4">
-              {assets.length === 0 && <p className="text-gray-500 col-span-2 text-center">No assets in inventory.</p>}
+            <div className="vortex-grid">
+              {assets.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-secondary)', gridColumn: 'span 2', padding: '2rem' }}>No assets in inventory.</p>}
               {assets.map(asset => {
                 const Icon = getIcon(asset.asset_type);
                 return (
-                  <div key={asset.id} className="asset-card bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-gray-100 rounded-lg text-gray-600"><Icon size={24} /></div>
-                      <div>
-                        <h3 className="font-bold text-gray-800">{asset.name}</h3>
-                        <p className="text-xs text-gray-500">{asset.asset_type}</p>
-                        <div className="flex gap-3 text-xs text-gray-400 mt-1">
-                          <span className="flex items-center gap-1"><Key size={10} /> {asset.serial_number}</span>
-                          <span className={`px-2 py-0.5 rounded-full border ${asset.condition === 'Excellent' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-yellow-50 text-yellow-600 border-yellow-200'}`}>{asset.condition}</span>
-                        </div>
+                  <div key={asset.id} className="vortex-grid-card">
+                    <div className="vortex-grid-header">
+                      <div className="vortex-grid-avatar" style={{ background: 'var(--gradient-primary)' }}>
+                        <Icon size={22} />
+                      </div>
+                      <div className="vortex-grid-title">
+                        <h3>{asset.name}</h3>
+                        <p>{asset.asset_type}</p>
                       </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs border ${asset.status === 'Assigned' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                      {asset.status}
+                    <div className="vortex-grid-details">
+                      <div className="vortex-detail-row">
+                        <span className="label"><Key size={12} /> Serial</span>
+                        <span className="value">{asset.serial_number}</span>
+                      </div>
+                      <div className="vortex-detail-row">
+                        <span className="label">Condition</span>
+                        <span className={`value ${asset.condition === 'Excellent' ? 'text-green' : 'text-orange'}`}>{asset.condition}</span>
+                      </div>
+                      <div className="vortex-detail-row">
+                        <span className="label">Status</span>
+                        <span className={`status-badge ${asset.status === 'Assigned' ? 'success' : 'secondary'}`}>{asset.status}</span>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="requests-list space-y-3">
+            <div className="vortex-page-card">
               {requests.map(req => (
-                <div key={req.id} className="request-item bg-white p-4 rounded-lg border border-gray-200 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Package size={20} /></div>
-                    <div>
-                      <h4 className="font-bold text-gray-800">{req.asset_type} Request</h4>
-                      <span className="text-xs text-gray-500">For: {req.employee_name} • {req.request_date}</span>
-                      <p className="text-xs text-gray-400">Reason: {req.reason}</p>
+                <div key={req.id} className="vortex-list-item">
+                  <div className="vortex-list-icon bg-purple">
+                    <Package size={20} />
+                  </div>
+                  <div className="vortex-list-content">
+                    <h4>{req.asset_type} Request</h4>
+                    <p>For: {req.employee_name}</p>
+                    <div className="vortex-list-meta">
+                      <span><Clock size={12} /> {req.request_date}</span>
+                      <span>Reason: {req.reason}</span>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs border ${
-                      req.status === 'Approved' ? 'bg-green-50 text-green-700 border-green-200' : 
-                      req.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200' : 
-                      'bg-yellow-50 text-yellow-700 border-yellow-200'
-                    }`}>
-                      {req.status}
-                    </span>
-
-                    {req.status === 'Pending' && (
-                      <div className="flex gap-2">
-                        <button onClick={() => handleStatusUpdate(req.id, 'Approved')} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200" title="Approve">
-                          <CheckCircle size={18} />
-                        </button>
-                        <button onClick={() => handleStatusUpdate(req.id, 'Rejected')} className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Reject">
-                          <X size={18} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <span className={`status-badge ${
+                    req.status === 'Approved' ? 'success' :
+                    req.status === 'Rejected' ? 'danger' : 'warning'
+                  }`}>
+                    {req.status === 'Approved' && <CheckCircle size={12} />}
+                    {req.status === 'Pending' && <Clock size={12} />}
+                    {req.status}
+                  </span>
+                  {req.status === 'Pending' && (
+                    <div className="action-buttons" style={{ marginLeft: '0.5rem' }}>
+                      <button onClick={(e) => { e.stopPropagation(); handleStatusUpdate(req.id, 'Approved'); }} className="btn-sm success">✓</button>
+                      <button onClick={(e) => { e.stopPropagation(); handleStatusUpdate(req.id, 'Rejected'); }} className="btn-sm danger">✕</button>
+                    </div>
+                  )}
                 </div>
               ))}
-              {requests.length === 0 && <p className="text-gray-500 text-center py-4">No pending requests</p>}
+              {requests.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>No pending requests</p>}
             </div>
           )}
         </>
@@ -175,31 +184,37 @@ const Assets = () => {
 
       {/* Request Modal */}
       {isModalOpen && (
-        <div className="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="modal bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="modal-header p-4 border-b flex justify-between items-center bg-gray-50">
-              <h2 className="font-bold text-lg">Request New Asset</h2>
-              <button onClick={() => setIsModalOpen(false)}><X size={20} /></button>
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h2><Sparkles size={18} /> Request New Asset</h2>
+              <button className="close-btn" onClick={() => setIsModalOpen(false)}><X size={18} /></button>
             </div>
-            <form onSubmit={handleRequestSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee</label>
-                <select className="w-full border rounded-lg p-2" onChange={(e) => setRequestForm({...requestForm, employee: e.target.value})} required>
+            <form onSubmit={handleRequestSubmit}>
+              <div className="form-group">
+                <label>Employee</label>
+                <select onChange={(e) => setRequestForm({...requestForm, employee: e.target.value})} required>
                   <option value="">Select Employee</option>
                   {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Asset Type</label>
-                <select className="w-full border rounded-lg p-2" value={requestForm.asset_type} onChange={(e) => setRequestForm({...requestForm, asset_type: e.target.value})}>
-                  <option>Laptop</option><option>Monitor</option><option>Phone</option><option>Accessory</option>
+              <div className="form-group">
+                <label>Asset Type</label>
+                <select value={requestForm.asset_type} onChange={(e) => setRequestForm({...requestForm, asset_type: e.target.value})}>
+                  <option>Laptop</option>
+                  <option>Monitor</option>
+                  <option>Phone</option>
+                  <option>Accessory</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
-                <textarea className="w-full border rounded-lg p-2" rows="3" onChange={(e) => setRequestForm({...requestForm, reason: e.target.value})} required></textarea>
+              <div className="form-group">
+                <label>Reason for Request</label>
+                <textarea placeholder="Describe why you need this asset..." rows="3" onChange={(e) => setRequestForm({...requestForm, reason: e.target.value})} required></textarea>
               </div>
-              <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium">Submit Request</button>
+              <div className="form-actions">
+                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn-primary">Submit Request</button>
+              </div>
             </form>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Zap } from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -31,17 +31,17 @@ const Login = () => {
     <div className="login-container">
       <div className="login-left">
         <div className="login-branding">
-          <h1>HORILLA</h1>
-          <p>Human Resource Management System</p>
+          <h1>VORTEX</h1>
+          <p>Next-Gen HR Management Platform</p>
         </div>
       </div>
       <div className="login-right">
         <div className="login-box">
           <div className="login-logo">
-            <div className="logo-circle">H</div>
+            <div className="logo-circle"><Zap size={32} /></div>
           </div>
-          <h2>Sign In</h2>
-          <p className="login-subtitle">Please login to access the dashboard.</p>
+          <h2>Welcome Back</h2>
+          <p className="login-subtitle">Sign in to access your Vortex dashboard</p>
           
           <form onSubmit={handleSubmit}>
             <div className="form-group">
