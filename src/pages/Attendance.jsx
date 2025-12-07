@@ -1,41 +1,58 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, XCircle, Coffee, Calendar } from 'lucide-react';
+import { attendanceAPI } from '../services/api'; // Import your API helper
 
-const attendanceRecords = [
-  { id: 1, name: 'John Doe', date: '2024-12-06', checkIn: '09:00', checkOut: '18:00', status: 'Present', hours: '9h 0m' },
-  { id: 2, name: 'Jane Smith', date: '2024-12-06', checkIn: '09:15', checkOut: '18:30', status: 'Present', hours: '9h 15m' },
-  { id: 3, name: 'Mike Johnson', date: '2024-12-06', checkIn: '08:45', checkOut: '17:45', status: 'Present', hours: '9h 0m' },
-  { id: 4, name: 'Emily Brown', date: '2024-12-06', checkIn: '-', checkOut: '-', status: 'On Leave', hours: '-' },
-  { id: 5, name: 'David Wilson', date: '2024-12-06', checkIn: '09:30', checkOut: '18:00', status: 'Late', hours: '8h 30m' },
-  { id: 6, name: 'Sarah Davis', date: '2024-12-06', checkIn: '-', checkOut: '-', status: 'Absent', hours: '-' },
-  { id: 7, name: 'Chris Miller', date: '2024-12-06', checkIn: '09:00', checkOut: '17:30', status: 'Early Leave', hours: '8h 30m' },
-  { id: 8, name: 'Lisa Anderson', date: '2024-12-06', checkIn: '09:00', checkOut: '-', status: 'Working', hours: '-' },
-];
-
-const summaryStats = [
-  { label: 'Present', value: 142, icon: CheckCircle, color: '#22c55e' },
-  { label: 'Absent', value: 6, icon: XCircle, color: '#ef4444' },
-  { label: 'On Leave', value: 8, icon: Coffee, color: '#f59e0b' },
-  { label: 'Late', value: 4, icon: Clock, color: '#6366f1' },
-];
+// Map icon strings from backend to components
+const ICON_MAP = {
+  'check': CheckCircle,
+  'x': XCircle,
+  'coffee': Coffee,
+  'clock': Clock
+};
 
 const Attendance = () => {
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [summaryStats, setSummaryStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Default to today's date
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Fetch Data
+  useEffect(() => {
+    loadData();
+  }, [selectedDate]); // Re-run when date changes
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [records, stats] = await Promise.all([
+        attendanceAPI.getAll(selectedDate),
+        attendanceAPI.getStats(selectedDate)
+      ]);
+      setAttendanceRecords(records);
+      setSummaryStats(stats);
+    } catch (error) {
+      console.error("Error loading attendance:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'Present': return 'success';
       case 'Absent': return 'danger';
       case 'On Leave': return 'warning';
-      case 'Late': return 'info';
-      case 'Early Leave': return 'info';
+      case 'Late': return 'info'; // Use info style for Late
       case 'Working': return 'primary';
-      default: return '';
+      default: return 'secondary';
     }
   };
 
   return (
-    <div className="attendance-page">
+    <div className="attendance-page page-content">
+      {/* Header */}
       <div className="page-header">
         <div>
           <h1>Attendance</h1>
@@ -51,56 +68,71 @@ const Attendance = () => {
         </div>
       </div>
 
+      {/* Summary Cards */}
       <div className="summary-cards">
-        {summaryStats.map((stat) => (
-          <div key={stat.label} className="summary-card">
-            <div className="summary-icon" style={{ backgroundColor: `${stat.color}20`, color: stat.color }}>
-              <stat.icon size={24} />
+        {summaryStats.map((stat, index) => {
+          const Icon = ICON_MAP[stat.icon] || CheckCircle;
+          return (
+            <div key={index} className="summary-card">
+              <div className="summary-icon" style={{ backgroundColor: `${stat.color}20`, color: stat.color }}>
+                <Icon size={24} />
+              </div>
+              <div className="summary-info">
+                <h3>{stat.value}</h3>
+                <p>{stat.label}</p>
+              </div>
             </div>
-            <div className="summary-info">
-              <h3>{stat.value}</h3>
-              <p>{stat.label}</p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
+      {/* Table */}
       <div className="table-card">
         <div className="table-header">
-          <h3>Today's Attendance</h3>
+          <h3>Attendance Log ({selectedDate})</h3>
         </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Employee</th>
-              <th>Date</th>
-              <th>Check In</th>
-              <th>Check Out</th>
-              <th>Working Hours</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {attendanceRecords.map((record) => (
-              <tr key={record.id}>
-                <td><strong>{record.name}</strong></td>
-                <td>{record.date}</td>
-                <td>{record.checkIn}</td>
-                <td>{record.checkOut}</td>
-                <td>{record.hours}</td>
-                <td>
-                  <span className={`status-badge ${getStatusColor(record.status)}`}>
-                    {record.status}
-                  </span>
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Date</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Working Hours</th>
+                <th>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan="6" style={{textAlign: 'center', padding: '20px'}}>Loading...</td></tr>
+              ) : attendanceRecords.length > 0 ? (
+                attendanceRecords.map((record) => (
+                  <tr key={record.id}>
+                    <td>
+                      <strong>{record.employee_name}</strong><br/>
+                      <span style={{fontSize: '0.8em', color: '#666'}}>{record.employee_id}</span>
+                    </td>
+                    <td>{record.date}</td>
+                    <td>{record.check_in || '-'}</td>
+                    <td>{record.check_out || '-'}</td>
+                    <td>{record.working_hours || '-'}</td>
+                    <td>
+                      <span className={`status-badge ${getStatusColor(record.status)}`}>
+                        {record.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan="6" style={{textAlign: 'center', padding: '20px', color: '#888'}}>No records found for this date.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 };
 
 export default Attendance;
-

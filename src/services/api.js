@@ -7,6 +7,61 @@ const getAuthHeaders = () => {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` })
   };
+};// ============ DASHBOARD API ============
+export const dashboardAPI = {
+  getStats: async () => {
+    // This points to the new 'dashboard' app we just created
+    const response = await fetch(`${API_BASE_URL}/dashboard/`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  }
+};
+
+// ============ ATTENDANCE API ============
+export const attendanceAPI = {
+  // Get all logs (with optional date filter)
+  getAll: async (date) => {
+    const query = date ? `?date=${date}` : '';
+    const response = await fetch(`${API_BASE_URL}/attendance/${query}`, { 
+      headers: getAuthHeaders() 
+    });
+    return handleResponse(response);
+  },
+
+  // Get stats for the summary cards
+  getStats: async (date) => {
+    const query = date ? `?date=${date}` : '';
+    const response = await fetch(`${API_BASE_URL}/attendance/stats/${query}`, { 
+      headers: getAuthHeaders() 
+    });
+    return handleResponse(response);
+  }
+};
+
+// ============ PAYROLL API ============
+export const payrollAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/payroll/`, { 
+      headers: getAuthHeaders() 
+    });
+    return handleResponse(response);
+  },
+
+  getStats: async () => {
+    const response = await fetch(`${API_BASE_URL}/payroll/payroll_stats/`, { 
+      headers: getAuthHeaders() 
+    });
+    return handleResponse(response);
+  },
+
+  runPayroll: async () => {
+    const response = await fetch(`${API_BASE_URL}/payroll/run_payroll/`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  }
 };
 
 // ============ RECRUITMENT API ============
