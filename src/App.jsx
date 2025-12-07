@@ -10,6 +10,11 @@ import Recruitment from './pages/Recruitment';
 import Payroll from './pages/Payroll';
 import Settings from './pages/Settings';
 import Holidays from './pages/Holidays';
+import Onboarding from './pages/Onboarding';
+import Performance from './pages/Performance';
+import Documents from './pages/Documents';
+import Organization from './pages/Organization';
+import Assets from './pages/Assets';
 import './App.css';
 
 function App() {
@@ -23,15 +28,15 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="employees" element={<Employees />} />
             <Route path="recruitment" element={<Recruitment />} />
-            <Route path="onboarding" element={<Dashboard />} />
+            <Route path="onboarding" element={<Onboarding />} />
             <Route path="attendance" element={<Attendance />} />
             <Route path="leave" element={<Leave />} />
             <Route path="holidays" element={<Holidays />} />
             <Route path="payroll" element={<Payroll />} />
-            <Route path="assets" element={<Dashboard />} />
-            <Route path="performance" element={<Dashboard />} />
-            <Route path="documents" element={<Dashboard />} />
-            <Route path="organization" element={<Dashboard />} />
+            <Route path="assets" element={<Assets />} />
+            <Route path="performance" element={<Performance />} />
+            <Route path="documents" element={<Documents />} />
+            <Route path="organization" element={<Organization />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
