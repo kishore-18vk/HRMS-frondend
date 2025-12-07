@@ -9,13 +9,76 @@ const getAuthHeaders = () => {
   };
 };
 
-// Handle API response
+// ============ IMPROVED ERROR HANDLER & AUTO LOGOUT ============
 const handleResponse = async (response) => {
+  // 1. Check if response is actually JSON
+  const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    const text = await response.text();
+    throw new Error(text.slice(0, 100) || "Server Error (Non-JSON)"); 
+  }
+
+  // 2. === AUTO LOGOUT FIX (Add this part) ===
+  // If the token is expired (401), clear storage and kick user to login
+  if (response.status === 401) {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    window.location.href = '/login'; // Redirect to login page
+    throw new Error("Session expired. Please login again.");
+  }
+  // ==========================================
+
   const data = await response.json();
+  
   if (!response.ok) {
+    // 3. If backend sends specific field errors (Django style)
+    if (typeof data === 'object' && !data.error) {
+       const messages = Object.entries(data)
+         .map(([key, val]) => `${key}: ${Array.isArray(val) ? val[0] : val}`)
+         .join('\n');
+       if (messages) throw new Error(messages);
+    }
+    // 4. Fallback to generic error
     throw new Error(data.error || 'Something went wrong');
   }
   return data;
+};
+
+// ============ LEAVE API ============
+export const leaveAPI = {
+  getAll: async (filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    const url = `${API_BASE_URL}/leaves/${params ? '?' + params : ''}`;
+    const response = await fetch(url, { headers: getAuthHeaders() });
+    return handleResponse(response);
+  },
+
+  create: async (leaveData) => {
+    const response = await fetch(`${API_BASE_URL}/leaves/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(leaveData)
+    });
+    return handleResponse(response);
+  },
+
+  update: async (id, leaveData) => {
+    const response = await fetch(`${API_BASE_URL}/leaves/`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ id, ...leaveData })
+    });
+    return handleResponse(response);
+  },
+
+  delete: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/leaves/`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ id })
+    });
+    return handleResponse(response);
+  }
 };
 
 // ============ AUTH API ============
@@ -27,7 +90,6 @@ export const authAPI = {
       body: JSON.stringify({ username, password })
     });
     const data = await handleResponse(response);
-    // Store tokens
     localStorage.setItem('access_token', data.access);
     localStorage.setItem('refresh_token', data.refresh);
     return data;
@@ -66,9 +128,7 @@ export const employeeAPI = {
   getAll: async (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
     const url = `${API_BASE_URL}/employee/employee-profile/${params ? '?' + params : ''}`;
-    const response = await fetch(url, {
-      headers: getAuthHeaders()
-    });
+    const response = await fetch(url, { headers: getAuthHeaders() });
     return handleResponse(response);
   },
 
@@ -110,16 +170,12 @@ export const employeeAPI = {
 // ============ HOLIDAY API ============
 export const holidayAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/holidays/`, {
-      headers: getAuthHeaders()
-    });
+    const response = await fetch(`${API_BASE_URL}/holidays/`, { headers: getAuthHeaders() });
     return handleResponse(response);
   },
 
   getById: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/holidays/${id}/`, {
-      headers: getAuthHeaders()
-    });
+    const response = await fetch(`${API_BASE_URL}/holidays/${id}/`, { headers: getAuthHeaders() });
     return handleResponse(response);
   },
 
@@ -149,4 +205,3 @@ export const holidayAPI = {
     return response.ok;
   }
 };
-

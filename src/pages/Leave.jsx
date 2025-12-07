@@ -1,22 +1,71 @@
-import { useState } from 'react';
-import { Plus, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
-
-const leaveRequests = [
-  { id: 1, name: 'John Doe', type: 'Annual Leave', from: '2024-12-10', to: '2024-12-15', days: 5, status: 'Pending', reason: 'Family vacation' },
-  { id: 2, name: 'Jane Smith', type: 'Sick Leave', from: '2024-12-05', to: '2024-12-06', days: 2, status: 'Approved', reason: 'Medical appointment' },
-  { id: 3, name: 'Mike Johnson', type: 'Annual Leave', from: '2024-12-20', to: '2024-12-25', days: 5, status: 'Pending', reason: 'Christmas holiday' },
-  { id: 4, name: 'Emily Brown', type: 'Personal Leave', from: '2024-12-08', to: '2024-12-08', days: 1, status: 'Approved', reason: 'Personal matters' },
-  { id: 5, name: 'David Wilson', type: 'Annual Leave', from: '2024-12-12', to: '2024-12-14', days: 3, status: 'Rejected', reason: 'Trip planning' },
-];
-
-const leaveStats = [
-  { label: 'Pending', value: 8, color: '#f59e0b' },
-  { label: 'Approved', value: 24, color: '#22c55e' },
-  { label: 'Rejected', value: 3, color: '#ef4444' },
-];
+import { useState, useEffect } from 'react';
+import { Plus, CheckCircle, XCircle, Clock, X } from 'lucide-react';
+import { leaveAPI } from '../services/api'; // Ensure this path is correct
 
 const Leave = () => {
+  // ============ STATE ============
   const [filter, setFilter] = useState('All');
+  const [leaves, setLeaves] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false); 
+
+  // State for the "Request Leave" form
+  const [formData, setFormData] = useState({
+    employee: '', 
+    leave_type: 'Annual Leave',
+    start_date: '',
+    end_date: '',
+    reason: ''
+  });
+
+  // ============ API CALLS ============
+
+  useEffect(() => {
+    fetchLeaves();
+  }, []);
+
+  const fetchLeaves = async () => {
+    try {
+      setLoading(true);
+      const data = await leaveAPI.getAll();
+      setLeaves(data);
+    } catch (error) {
+      console.error("Failed to fetch leaves:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await leaveAPI.create(formData);
+      setShowModal(false);
+      setFormData({ employee: '', leave_type: 'Annual Leave', start_date: '', end_date: '', reason: '' });
+      fetchLeaves();
+      alert("Leave Request Submitted Successfully!");
+    } catch (error) {
+      alert("Error submitting request: " + error.message);
+    }
+  };
+
+  const handleStatusUpdate = async (id, newStatus) => {
+    if(!window.confirm(`Are you sure you want to ${newStatus} this request?`)) return;
+
+    try {
+      await leaveAPI.update(id, { status: newStatus });
+      fetchLeaves(); 
+    } catch (error) {
+      alert("Failed to update status");
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // ============ HELPERS ============
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -35,9 +84,16 @@ const Leave = () => {
   };
 
   const filteredRequests = filter === 'All' 
-    ? leaveRequests 
-    : leaveRequests.filter(r => r.status === filter);
+    ? leaves 
+    : leaves.filter(r => r.status === filter);
 
+  const stats = {
+    pending: leaves.filter(r => r.status === 'Pending').length,
+    approved: leaves.filter(r => r.status === 'Approved').length,
+    rejected: leaves.filter(r => r.status === 'Rejected').length,
+  };
+
+  // ============ RENDER ============
   return (
     <div className="leave-page">
       <div className="page-header">
@@ -45,18 +101,24 @@ const Leave = () => {
           <h1>Leave Management</h1>
           <p>Manage employee leave requests</p>
         </div>
-        <button className="btn-primary">
+        <button className="btn-primary" onClick={() => setShowModal(true)}>
           <Plus size={18} /> Request Leave
         </button>
       </div>
 
       <div className="leave-stats">
-        {leaveStats.map((stat) => (
-          <div key={stat.label} className="leave-stat-card" style={{ borderLeftColor: stat.color }}>
-            <h3>{stat.value}</h3>
-            <p>{stat.label} Requests</p>
-          </div>
-        ))}
+        <div className="leave-stat-card" style={{ borderLeftColor: '#f59e0b' }}>
+          <h3>{stats.pending}</h3>
+          <p>Pending Requests</p>
+        </div>
+        <div className="leave-stat-card" style={{ borderLeftColor: '#22c55e' }}>
+          <h3>{stats.approved}</h3>
+          <p>Approved Requests</p>
+        </div>
+        <div className="leave-stat-card" style={{ borderLeftColor: '#ef4444' }}>
+          <h3>{stats.rejected}</h3>
+          <p>Rejected Requests</p>
+        </div>
       </div>
 
       <div className="table-card">
@@ -74,49 +136,115 @@ const Leave = () => {
             ))}
           </div>
         </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Employee</th>
-              <th>Leave Type</th>
-              <th>From</th>
-              <th>To</th>
-              <th>Days</th>
-              <th>Reason</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRequests.map((request) => (
-              <tr key={request.id}>
-                <td><strong>{request.name}</strong></td>
-                <td>{request.type}</td>
-                <td>{request.from}</td>
-                <td>{request.to}</td>
-                <td>{request.days}</td>
-                <td>{request.reason}</td>
-                <td>
-                  <span className={`status-badge ${getStatusColor(request.status)}`}>
-                    {getStatusIcon(request.status)} {request.status}
-                  </span>
-                </td>
-                <td>
-                  {request.status === 'Pending' && (
-                    <div className="action-buttons">
-                      <button className="btn-sm success">Approve</button>
-                      <button className="btn-sm danger">Reject</button>
-                    </div>
-                  )}
-                </td>
+
+        {loading ? (
+          <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Leave Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Days</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredRequests.map((request) => (
+                <tr key={request.id}>
+                  {/* === UPDATED COLUMN TO SHOW ID === */}
+                  <td>
+                    <strong>{request.name}</strong>
+                    <div style={{ fontSize: '0.8rem', color: '#666' }}>{request.employee}</div>
+                  </td>
+                  
+                  <td>{request.leave_type}</td>
+                  <td>{request.start_date}</td>
+                  <td>{request.end_date}</td>
+                  <td>{request.days}</td>
+                  <td>{request.reason}</td>
+                  <td>
+                    <span className={`status-badge ${getStatusColor(request.status)}`}>
+                      {getStatusIcon(request.status)} {request.status}
+                    </span>
+                  </td>
+                  <td>
+                    {request.status === 'Pending' && (
+                      <div className="action-buttons">
+                        <button className="btn-sm success" onClick={() => handleStatusUpdate(request.id, 'Approved')}>Approve</button>
+                        <button className="btn-sm danger" onClick={() => handleStatusUpdate(request.id, 'Rejected')}>Reject</button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
+
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>New Leave Request</h3>
+              <button className="close-btn" onClick={() => setShowModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Employee ID (Optional)</label>
+                <input 
+                  type="text" 
+                  name="employee" 
+                  value={formData.employee} 
+                  onChange={handleInputChange} 
+                  placeholder="Leave empty to auto-fill" 
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Leave Type</label>
+                <select name="leave_type" value={formData.leave_type} onChange={handleInputChange}>
+                  <option>Annual Leave</option>
+                  <option>Sick Leave</option>
+                  <option>Personal Leave</option>
+                  <option>Maternity/Paternity Leave</option>
+                </select>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>From Date</label>
+                  <input type="date" name="start_date" value={formData.start_date} onChange={handleInputChange} required />
+                </div>
+                <div className="form-group">
+                  <label>To Date</label>
+                  <input type="date" name="end_date" value={formData.end_date} onChange={handleInputChange} required />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Reason</label>
+                <textarea name="reason" rows="3" value={formData.reason} onChange={handleInputChange} placeholder="Describe the reason..." required></textarea>
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="btn-primary">Submit Request</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Leave;
-
