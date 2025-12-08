@@ -338,6 +338,24 @@ export const assetsAPI = {
   }
 };
 
+
+// ============ SETTINGS API ============
+export const settingsAPI = {
+  getSettings: async () => {
+    const response = await fetch(`${API_BASE_URL}/settings/`, { headers: getAuthHeaders() });
+    return handleResponse(response);
+  },
+
+  updateSettings: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/settings/`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  }
+};
+
 // ============ HOLIDAY API ============
 export const holidayAPI = {
   getAll: async () => {
