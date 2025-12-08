@@ -13,41 +13,12 @@ import { dashboardAPI } from '../services/api';
 const ICON_MAP = { 'Total Employees': Users, 'Present Today': UserCheck, 'On Leave': Calendar, 'Open Positions': UserPlus };
 const COLORS = ['#7c3aed', '#06b6d4', '#10b981', '#f43f5e', '#f97316', '#ec4899'];
 
-// Attendance Heatmap Data (last 4 weeks)
-const heatmapData = [
-  { day: 'Mon', w1: 95, w2: 92, w3: 88, w4: 96 },
-  { day: 'Tue', w1: 93, w2: 95, w3: 91, w4: 94 },
-  { day: 'Wed', w1: 97, w2: 89, w3: 94, w4: 92 },
-  { day: 'Thu', w1: 91, w2: 93, w3: 96, w4: 90 },
-  { day: 'Fri', w1: 85, w2: 87, w3: 82, w4: 88 },
-];
-
-// Pending Approvals
-const pendingApprovals = [
-  { id: 1, type: 'Leave', name: 'Sarah Johnson', request: '3 days vacation', time: '2h ago', avatar: 'SJ', color: '#7c3aed' },
-  { id: 2, type: 'Expense', name: 'Mike Chen', request: '$450 travel reimbursement', time: '4h ago', avatar: 'MC', color: '#06b6d4' },
-  { id: 3, type: 'WFH', name: 'Emma Wilson', request: 'Work from home - Friday', time: '5h ago', avatar: 'EW', color: '#10b981' },
-];
-
-// Reminders
+// Static Reminders (Mocked for now as we haven't built a specific Reminders App yet)
 const reminders = [
   { id: 1, title: 'Team meeting', time: '10:00 AM', icon: Users, color: '#7c3aed', urgent: false },
   { id: 2, title: 'Payroll deadline', time: 'Tomorrow', icon: DollarSign, color: '#f43f5e', urgent: true },
   { id: 3, title: 'Performance reviews', time: 'Dec 15', icon: Target, color: '#f97316', urgent: false },
   { id: 4, title: '3 contracts expiring', time: 'This week', icon: FileText, color: '#06b6d4', urgent: true },
-];
-
-// Payroll Status
-const payrollStatus = { processed: 142, pending: 8, total: 150, amount: '$485,000' };
-
-// Employee Trends
-const employeeTrends = [
-  { month: 'Jul', hired: 5, left: 2 },
-  { month: 'Aug', hired: 8, left: 1 },
-  { month: 'Sep', hired: 3, left: 3 },
-  { month: 'Oct', hired: 6, left: 2 },
-  { month: 'Nov', hired: 4, left: 1 },
-  { month: 'Dec', hired: 7, left: 0 },
 ];
 
 const getHeatmapColor = (value) => {
@@ -61,19 +32,21 @@ const getHeatmapColor = (value) => {
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Clock & Check-in States
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState(null);
   const [workingTime, setWorkingTime] = useState('00:00:00');
   const [onBreak, setOnBreak] = useState(false);
 
-  // Live clock
+  // 1. Live clock
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Working time counter
+  // 2. Working time counter
   useEffect(() => {
     let interval;
     if (isCheckedIn && checkInTime && !onBreak) {
@@ -88,6 +61,7 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [isCheckedIn, checkInTime, onBreak]);
 
+  // 3. Fetch Data from Backend
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -102,6 +76,7 @@ const Dashboard = () => {
     fetchStats();
   }, []);
 
+  // Handlers
   const handleCheckIn = () => { setIsCheckedIn(true); setCheckInTime(new Date()); setOnBreak(false); };
   const handleCheckOut = () => { setIsCheckedIn(false); setCheckInTime(null); setWorkingTime('00:00:00'); setOnBreak(false); };
   const handleBreak = () => setOnBreak(!onBreak);
@@ -109,7 +84,16 @@ const Dashboard = () => {
   const formatTime = (date) => date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
   const formatDate = (date) => date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+  // === Loading State ===
   if (loading) return <div className="dashboard-loading"><div className="loader"></div><p>Loading Vortex...</p></div>;
+
+  // === DATA PREPARATION (Extracting from API response) ===
+  const heatmapData = dashboardData?.heatmap_data || [];
+  const pendingApprovals = dashboardData?.pending_approvals || [];
+  const employeeTrends = dashboardData?.employee_trends || [];
+  const payrollStatus = dashboardData?.payroll_status || { processed: 0, pending: 0, total: 0, amount: '$0' };
+  const departmentDistribution = dashboardData?.department_distribution || [];
+  const recentActivities = dashboardData?.recent_activities || [];
 
   return (
     <div className="dashboard-vortex">
@@ -206,7 +190,7 @@ const Dashboard = () => {
               <span></span>
               <span>W1</span><span>W2</span><span>W3</span><span>W4</span>
             </div>
-            {heatmapData.map((row, i) => (
+            {heatmapData.length > 0 ? heatmapData.map((row, i) => (
               <div key={i} className="heatmap-row">
                 <span className="heatmap-day">{row.day}</span>
                 {['w1', 'w2', 'w3', 'w4'].map(w => (
@@ -215,7 +199,7 @@ const Dashboard = () => {
                   </div>
                 ))}
               </div>
-            ))}
+            )) : <p className="no-data">No attendance data yet</p>}
           </div>
           <div className="heatmap-legend">
             <span>Low</span>
@@ -237,7 +221,7 @@ const Dashboard = () => {
             <span className="count-badge">{pendingApprovals.length}</span>
           </div>
           <div className="approvals-list">
-            {pendingApprovals.map(item => (
+            {pendingApprovals.length > 0 ? pendingApprovals.map(item => (
               <div key={item.id} className="approval-item">
                 <div className="approval-avatar" style={{ background: item.color }}>{item.avatar}</div>
                 <div className="approval-info">
@@ -250,7 +234,7 @@ const Dashboard = () => {
                   <button className="btn-reject">✕</button>
                 </div>
               </div>
-            ))}
+            )) : <p className="no-activities">No pending approvals</p>}
           </div>
         </div>
 
@@ -261,14 +245,16 @@ const Dashboard = () => {
             <span className="card-badge">6 Months</span>
           </div>
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={employeeTrends} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} fontSize={12} />
-              <YAxis axisLine={false} tickLine={false} fontSize={12} />
-              <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-              <Bar dataKey="hired" fill="#10b981" radius={[4, 4, 0, 0]} name="Hired" />
-              <Bar dataKey="left" fill="#f43f5e" radius={[4, 4, 0, 0]} name="Left" />
-            </BarChart>
+            {employeeTrends.length > 0 ? (
+              <BarChart data={employeeTrends} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} fontSize={12} />
+                <YAxis axisLine={false} tickLine={false} fontSize={12} />
+                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
+                <Bar dataKey="hired" fill="#10b981" radius={[4, 4, 0, 0]} name="Hired" />
+                <Bar dataKey="left" fill="#f43f5e" radius={[4, 4, 0, 0]} name="Left" />
+              </BarChart>
+            ) : <p className="no-data">No data available</p>}
           </ResponsiveContainer>
           <div className="trends-legend">
             <span><span className="dot green"></span> Hired</span>
@@ -284,7 +270,7 @@ const Dashboard = () => {
           </div>
           <div className="payroll-amount">{payrollStatus.amount}</div>
           <div className="payroll-bar">
-            <div className="payroll-fill" style={{ width: `${(payrollStatus.processed / payrollStatus.total) * 100}%` }}></div>
+            <div className="payroll-fill" style={{ width: `${(payrollStatus.processed / (payrollStatus.total || 1)) * 100}%` }}></div>
           </div>
           <div className="payroll-stats">
             <div className="payroll-stat">
@@ -302,7 +288,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Reminders */}
+        {/* Reminders (Static for now) */}
         <div className="vortex-card reminders-card">
           <div className="card-header">
             <h3><Clock size={18} /> Reminders</h3>
@@ -333,7 +319,7 @@ const Dashboard = () => {
             <h3><Users size={18} /> Departments</h3>
           </div>
           <ResponsiveContainer width="100%" height={200}>
-            {dashboardData?.department_distribution?.length > 0 ? (
+            {departmentDistribution.length > 0 ? (
               <PieChart>
                 <defs>
                   {COLORS.map((color, i) => (
@@ -343,8 +329,8 @@ const Dashboard = () => {
                     </linearGradient>
                   ))}
                 </defs>
-                <Pie data={dashboardData.department_distribution} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3}>
-                  {dashboardData.department_distribution.map((entry, index) => (
+                <Pie data={departmentDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3}>
+                  {departmentDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={`url(#gradient-${index % COLORS.length})`} stroke={COLORS[index % COLORS.length]} strokeWidth={2} />
                   ))}
                 </Pie>
@@ -355,7 +341,7 @@ const Dashboard = () => {
             )}
           </ResponsiveContainer>
           <div className="dept-legend">
-            {dashboardData?.department_distribution?.map((item, i) => (
+            {departmentDistribution.map((item, i) => (
               <span key={i}><span className="dot" style={{ background: COLORS[i % COLORS.length] }}></span>{item.name}</span>
             ))}
           </div>
@@ -369,8 +355,8 @@ const Dashboard = () => {
           <button className="view-all-btn">View All <ChevronRight size={14} /></button>
         </div>
         <div className="activity-feed">
-          {dashboardData?.recent_activities?.length > 0 ? (
-            dashboardData.recent_activities.map((activity, i) => (
+          {recentActivities.length > 0 ? (
+            recentActivities.map((activity, i) => (
               <div key={activity.id || i} className="activity-item">
                 <div className="activity-dot" style={{ background: COLORS[i % COLORS.length] }}></div>
                 <div className="activity-content">
