@@ -1,6 +1,6 @@
-const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:8000/api' 
-  : 'https://simplehr-4.onrender.com/api'; // <--- PUT YOUR RENDER URL HERE
+const API_BASE_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:8000/api'  // Local development
+  : 'https://simplehr-11.onrender.com/api'; // Live Production // <--- PUT YOUR RENDER URL HERE
 
 // Helper to get auth headers
 const getAuthHeaders = () => {
