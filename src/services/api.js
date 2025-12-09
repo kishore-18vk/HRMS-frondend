@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:8000/api' 
+  : 'https://simplehr-4.onrender.com/api'; // <--- PUT YOUR RENDER URL HERE
 
 // Helper to get auth headers
 const getAuthHeaders = () => {
@@ -7,7 +9,9 @@ const getAuthHeaders = () => {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` })
   };
-};// ============ DASHBOARD API ============
+};
+
+// ============ DASHBOARD API ============
 export const dashboardAPI = {
   getStats: async () => {
     // This points to the new 'dashboard' app we just created
