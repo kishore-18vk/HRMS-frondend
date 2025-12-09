@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:8000/api'  // Local development
+  : 'https://simplehr-13.onrender.com/api'; // Live Production // <--- PUT YOUR RENDER URL HERE
 
 // Helper to get auth headers
 const getAuthHeaders = () => {
@@ -7,7 +9,9 @@ const getAuthHeaders = () => {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` })
   };
-};// ============ DASHBOARD API ============
+};
+
+// ============ DASHBOARD API ============
 export const dashboardAPI = {
   getStats: async () => {
     // This points to the new 'dashboard' app we just created
@@ -333,6 +337,24 @@ export const assetsAPI = {
       method: 'PATCH',
       headers: getAuthHeaders(),
       body: JSON.stringify({ status })
+    });
+    return handleResponse(response);
+  }
+};
+
+
+// ============ SETTINGS API ============
+export const settingsAPI = {
+  getSettings: async () => {
+    const response = await fetch(`${API_BASE_URL}/settings/`, { headers: getAuthHeaders() });
+    return handleResponse(response);
+  },
+
+  updateSettings: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/settings/`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
     });
     return handleResponse(response);
   }

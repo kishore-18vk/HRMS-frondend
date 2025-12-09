@@ -2,21 +2,21 @@ import React, { useState } from 'react';
 import { Building2, Users, MapPin, Globe, Phone, Mail, ChevronDown, ChevronRight, User } from 'lucide-react';
 
 const companyInfo = {
-  name: 'Horilla Technologies',
+  name: 'Vortex Technologies',
   industry: 'Information Technology',
   founded: '2020',
   employees: 150,
   locations: 3,
-  website: 'www.horilla.com'
+  website: 'www.vortex.com'
 };
 
 const departments = [
-  { id: 1, name: 'Engineering', head: 'John Smith', employees: 45, color: '#6366f1', icon: '💻' },
+  { id: 1, name: 'Engineering', head: 'John Smith', employees: 45, color: '#7c3aed', icon: '💻' },
   { id: 2, name: 'Product', head: 'Sarah Johnson', employees: 12, color: '#22c55e', icon: '🎯' },
   { id: 3, name: 'Design', head: 'Mike Chen', employees: 8, color: '#f59e0b', icon: '🎨' },
   { id: 4, name: 'Marketing', head: 'Emily Davis', employees: 15, color: '#ec4899', icon: '📢' },
-  { id: 5, name: 'HR', head: 'Lisa Brown', employees: 6, color: '#14b8a6', icon: '👥' },
-  { id: 6, name: 'Finance', head: 'David Wilson', employees: 10, color: '#8b5cf6', icon: '💰' },
+  { id: 5, name: 'HR', head: 'Lisa Brown', employees: 6, color: '#06b6d4', icon: '👥' },
+  { id: 6, name: 'Finance', head: 'David Wilson', employees: 10, color: '#f43f5e', icon: '💰' },
 ];
 
 const orgTree = [
@@ -35,17 +35,17 @@ const TreeNode = ({ node, level = 0 }) => {
   const hasChildren = node.children && node.children.length > 0;
 
   return (
-    <div className="tree-node" style={{ marginLeft: level * 40 }}>
-      <div className="tree-item" onClick={() => hasChildren && setExpanded(!expanded)}>
-        {hasChildren && (expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
-        <div className="tree-avatar"><User size={18} /></div>
-        <div className="tree-info">
+    <div style={{ marginLeft: level * 40 }}>
+      <div className="vortex-list-item" onClick={() => hasChildren && setExpanded(!expanded)} style={{ cursor: hasChildren ? 'pointer' : 'default' }}>
+        {hasChildren && (expanded ? <ChevronDown size={16} style={{ color: 'var(--primary)' }} /> : <ChevronRight size={16} style={{ color: 'var(--primary)' }} />)}
+        <div className="vortex-list-icon bg-purple"><User size={18} /></div>
+        <div className="vortex-list-content">
           <h4>{node.name}</h4>
-          <span>{node.role}</span>
+          <p>{node.role}</p>
         </div>
       </div>
       {hasChildren && expanded && (
-        <div className="tree-children">
+        <div style={{ borderLeft: '2px solid var(--border)', marginLeft: '1.5rem', paddingLeft: '0.5rem' }}>
           {node.children.map(child => <TreeNode key={child.id} node={child} level={level + 1} />)}
         </div>
       )}
@@ -57,28 +57,44 @@ const Organization = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="organization-page">
+    <div className="organization-page page-content">
       {/* Header */}
-      <div className="org-header">
-        <div className="org-logo"><Building2 size={32} /></div>
-        <div className="org-info">
-          <h1>{companyInfo.name}</h1>
-          <p>{companyInfo.industry} • Founded {companyInfo.founded}</p>
+      <div className="page-header" style={{ background: 'var(--gradient-primary)', padding: '2rem', borderRadius: '16px', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: '60px', height: '60px', background: 'rgba(255,255,255,0.2)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Building2 size={32} style={{ color: 'white' }} />
+          </div>
+          <div>
+            <h1 style={{ color: 'white', fontSize: '1.8rem' }}>{companyInfo.name}</h1>
+            <p style={{ color: 'rgba(255,255,255,0.8)' }}>{companyInfo.industry} • Founded {companyInfo.founded}</p>
+          </div>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="org-stats">
-        <div className="org-stat"><Users size={24} /><div><h3>{companyInfo.employees}</h3><p>Employees</p></div></div>
-        <div className="org-stat"><Building2 size={24} /><div><h3>{departments.length}</h3><p>Departments</p></div></div>
-        <div className="org-stat"><MapPin size={24} /><div><h3>{companyInfo.locations}</h3><p>Locations</p></div></div>
-        <div className="org-stat"><Globe size={24} /><div><h3>{companyInfo.website}</h3><p>Website</p></div></div>
+      <div className="vortex-stats-row">
+        <div className="vortex-stat-item" style={{ '--stat-color': '#7c3aed' }}>
+          <div className="vortex-stat-icon bg-purple"><Users size={22} /></div>
+          <div className="vortex-stat-info"><h3>{companyInfo.employees}</h3><p>Employees</p></div>
+        </div>
+        <div className="vortex-stat-item" style={{ '--stat-color': '#06b6d4' }}>
+          <div className="vortex-stat-icon bg-cyan"><Building2 size={22} /></div>
+          <div className="vortex-stat-info"><h3>{departments.length}</h3><p>Departments</p></div>
+        </div>
+        <div className="vortex-stat-item" style={{ '--stat-color': '#f43f5e' }}>
+          <div className="vortex-stat-icon bg-pink"><MapPin size={22} /></div>
+          <div className="vortex-stat-info"><h3>{companyInfo.locations}</h3><p>Locations</p></div>
+        </div>
+        <div className="vortex-stat-item" style={{ '--stat-color': '#22c55e' }}>
+          <div className="vortex-stat-icon bg-green"><Globe size={22} /></div>
+          <div className="vortex-stat-info"><h3 style={{ fontSize: '0.9rem' }}>{companyInfo.website}</h3><p>Website</p></div>
+        </div>
       </div>
 
       {/* Tabs */}
-      <div className="org-tabs">
-        <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>Departments</button>
-        <button className={activeTab === 'hierarchy' ? 'active' : ''} onClick={() => setActiveTab('hierarchy')}>Org Chart</button>
+      <div className="vortex-tabs">
+        <button className={`vortex-tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Departments</button>
+        <button className={`vortex-tab ${activeTab === 'hierarchy' ? 'active' : ''}`} onClick={() => setActiveTab('hierarchy')}>Org Chart</button>
       </div>
 
       {activeTab === 'overview' ? (
