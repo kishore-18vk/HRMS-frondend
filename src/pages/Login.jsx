@@ -20,7 +20,12 @@ const Login = () => {
     const result = await login(username, password);
 
     if (result.success) {
-      navigate('/dashboard');
+      // Redirect based on role
+      if (result.role === 'employee') {
+        navigate('/employee-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       setError(result.error || 'Invalid credentials');
     }
@@ -42,7 +47,7 @@ const Login = () => {
           </div>
           <h2>Welcome Back</h2>
           <p className="login-subtitle">Sign in to access your Vortex dashboard</p>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Username</label>
@@ -54,7 +59,7 @@ const Login = () => {
                 required
               />
             </div>
-            
+
             <div className="form-group">
               <label>Password</label>
               <div className="password-input">
@@ -84,7 +89,7 @@ const Login = () => {
           </form>
 
           <div className="help-text">
-            <p>Note: Use username <strong>admin</strong> and password <strong>admin</strong> to log in.</p>
+            <p>Note: Use username <strong>admin</strong> and password <strong>admin</strong> to log in as Admin.</p>
           </div>
 
           <a href="#" className="forgot-password">Forgot password?</a>
@@ -95,4 +100,3 @@ const Login = () => {
 };
 
 export default Login;
-

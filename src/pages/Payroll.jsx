@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Download, Calendar, TrendingUp, X, Printer } from 'lucide-react';
+import { DollarSign, Download, Calendar, TrendingUp, X, Printer, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { payrollAPI } from '../services/api';
 
 const Payroll = () => {
@@ -7,6 +7,9 @@ const Payroll = () => {
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSlip, setSelectedSlip] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     loadData();
@@ -23,24 +26,62 @@ const Payroll = () => {
       setStats(statsData);
     } catch (error) {
       console.error("Error loading payroll:", error);
+      setError('Failed to load payroll data');
     } finally {
       setLoading(false);
     }
   };
 
   const handleRunPayroll = async () => {
-    if(!window.confirm("Generate payroll for all active employees?")) return;
+    if (!window.confirm("Generate payroll for all active employees?")) return;
     try {
       const result = await payrollAPI.runPayroll();
-      alert(result.message);
+      setSuccess(result.message || 'Payroll generated successfully');
+      setTimeout(() => setSuccess(''), 3000);
       loadData();
     } catch (error) {
-      alert("Failed: " + error.message);
+      setError("Failed: " + error.message);
+      setTimeout(() => setError(''), 5000);
+    }
+  };
+
+  const handleStatusChange = async (payrollId, currentStatus, newStatus) => {
+    // Validation: Cannot set Paid twice
+    if (currentStatus === 'Paid' && newStatus === 'Paid') {
+      setError('This payroll is already marked as Paid');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    // Validation: Status cannot be empty
+    if (!newStatus) {
+      setError('Please select a valid status');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    setStatusLoading(payrollId);
+    setError('');
+
+    try {
+      await payrollAPI.setStatus(payrollId, newStatus);
+      setSuccess(`Payroll status updated to ${newStatus}`);
+      setTimeout(() => setSuccess(''), 3000);
+
+      // Update local state
+      setPayrollData(prev => prev.map(record =>
+        record.id === payrollId ? { ...record, status: newStatus } : record
+      ));
+    } catch (err) {
+      setError(err.message || 'Failed to update status');
+      setTimeout(() => setError(''), 5000);
+    } finally {
+      setStatusLoading(null);
     }
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
   };
 
   return (
@@ -55,6 +96,18 @@ const Payroll = () => {
           <button className="btn-primary" onClick={handleRunPayroll}>Run Payroll</button>
         </div>
       </div>
+
+      {/* Notifications */}
+      {error && (
+        <div className="notification error">
+          <AlertCircle size={18} /> {error}
+        </div>
+      )}
+      {success && (
+        <div className="notification success">
+          <CheckCircle size={18} /> {success}
+        </div>
+      )}
 
       <div className="stats-grid three-cols">
         {stats.map((stat, index) => (
@@ -84,28 +137,44 @@ const Payroll = () => {
                 <th>Basic Salary</th>
                 <th>Net Salary</th>
                 <th>Status</th>
+                <th>Change Status</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? <tr><td colSpan="7" className="text-center p-4">Loading...</td></tr> : 
-               payrollData.map((record) => (
-                <tr key={record.id}>
-                  <td><span className="text-gray-500 text-sm">{record.employee_id}</span></td>
-                  <td><strong>{record.employee_name} {record.employee_last_name}</strong></td>
-                  <td>{record.department}</td>
-                  <td>{formatCurrency(record.basic_salary)}</td>
-                  <td><strong>{formatCurrency(record.net_salary)}</strong></td>
-                  <td>
-                    <span className={`status-badge ${record.status === 'Paid' ? 'success' : 'warning'}`}>
-                      {record.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button className="btn-sm" onClick={() => setSelectedSlip(record)}>View Slip</button>
-                  </td>
-                </tr>
-              ))}
+              {loading ? <tr><td colSpan="8" className="text-center p-4">Loading...</td></tr> :
+                payrollData.map((record) => (
+                  <tr key={record.id}>
+                    <td><span className="text-gray-500 text-sm">{record.employee_id}</span></td>
+                    <td><strong>{record.employee_name} {record.employee_last_name}</strong></td>
+                    <td>{record.department}</td>
+                    <td>{formatCurrency(record.basic_salary)}</td>
+                    <td><strong>{formatCurrency(record.net_salary)}</strong></td>
+                    <td>
+                      <span className={`status-badge ${record.status === 'Paid' ? 'success' : 'warning'}`}>
+                        {record.status === 'Paid' ? <CheckCircle size={14} /> : <Clock size={14} />}
+                        {record.status}
+                      </span>
+                    </td>
+                    <td>
+                      <select
+                        className="status-select"
+                        value={record.status}
+                        onChange={(e) => handleStatusChange(record.id, record.status, e.target.value)}
+                        disabled={statusLoading === record.id || record.status === 'Paid'}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Paid">Paid</option>
+                      </select>
+                      {statusLoading === record.id && (
+                        <span className="loading-spinner-small"></span>
+                      )}
+                    </td>
+                    <td>
+                      <button className="btn-sm" onClick={() => setSelectedSlip(record)}>View Slip</button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -116,7 +185,7 @@ const Payroll = () => {
           <div className="modal" style={{ maxWidth: '600px' }}>
             <div className="modal-header">
               <h2>Payslip: {selectedSlip.employee_id}</h2>
-              <button className="close-btn" onClick={() => setSelectedSlip(null)}><X size={20}/></button>
+              <button className="close-btn" onClick={() => setSelectedSlip(null)}><X size={20} /></button>
             </div>
             <div className="p-6">
               <div className="flex justify-between items-center mb-6 border-b pb-4">
@@ -136,7 +205,7 @@ const Payroll = () => {
                 <div className="border-t pt-3 mt-3 flex justify-between font-bold text-lg"><span>Net Salary</span><span className="text-primary">{formatCurrency(selectedSlip.net_salary)}</span></div>
               </div>
               <div className="form-actions mt-6">
-                <button className="btn-outline" onClick={() => window.print()}><Printer size={16} className="mr-2"/> Print</button>
+                <button className="btn-outline" onClick={() => window.print()}><Printer size={16} className="mr-2" /> Print</button>
                 <button className="btn-primary" onClick={() => setSelectedSlip(null)}>Close</button>
               </div>
             </div>

@@ -8,12 +8,13 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line
 } from 'recharts';
-import { dashboardAPI } from '../services/api';
+import { dashboardAPI, attendanceAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const ICON_MAP = { 'Total Employees': Users, 'Present Today': UserCheck, 'On Leave': Calendar, 'Open Positions': UserPlus };
 const COLORS = ['#7c3aed', '#06b6d4', '#10b981', '#f43f5e', '#f97316', '#ec4899'];
 
-// Static Reminders (Mocked for now as we haven't built a specific Reminders App yet)
+// Static Reminders (Mocked for now)
 const reminders = [
   { id: 1, title: 'Team meeting', time: '10:00 AM', icon: Users, color: '#7c3aed', urgent: false },
   { id: 2, title: 'Payroll deadline', time: 'Tomorrow', icon: DollarSign, color: '#f43f5e', urgent: true },
@@ -30,15 +31,18 @@ const getHeatmapColor = (value) => {
 };
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Clock & Check-in States
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const [checkInTime, setCheckInTime] = useState(null);
+  const [todayAttendance, setTodayAttendance] = useState(null);
   const [workingTime, setWorkingTime] = useState('00:00:00');
   const [onBreak, setOnBreak] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [checkError, setCheckError] = useState('');
+  const [checkSuccess, setCheckSuccess] = useState('');
 
   // 1. Live clock
   useEffect(() => {
@@ -49,8 +53,9 @@ const Dashboard = () => {
   // 2. Working time counter
   useEffect(() => {
     let interval;
-    if (isCheckedIn && checkInTime && !onBreak) {
+    if (todayAttendance?.check_in && !todayAttendance?.check_out && !onBreak) {
       interval = setInterval(() => {
+        const checkInTime = new Date(todayAttendance.check_in_datetime);
         const diff = Math.floor((new Date() - checkInTime) / 1000);
         const hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
         const mins = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
@@ -59,14 +64,18 @@ const Dashboard = () => {
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isCheckedIn, checkInTime, onBreak]);
+  }, [todayAttendance, onBreak]);
 
   // 3. Fetch Data from Backend
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await dashboardAPI.getStats();
+        const [data, attendance] = await Promise.all([
+          dashboardAPI.getStats(),
+          attendanceAPI.getToday().catch(() => null)
+        ]);
         setDashboardData(data);
+        setTodayAttendance(attendance);
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
       } finally {
@@ -77,17 +86,54 @@ const Dashboard = () => {
   }, []);
 
   // Handlers
-  const handleCheckIn = () => { setIsCheckedIn(true); setCheckInTime(new Date()); setOnBreak(false); };
-  const handleCheckOut = () => { setIsCheckedIn(false); setCheckInTime(null); setWorkingTime('00:00:00'); setOnBreak(false); };
+  const handleCheckIn = async () => {
+    setActionLoading(true);
+    setCheckError('');
+    setCheckSuccess('');
+
+    try {
+      const result = await attendanceAPI.checkIn();
+      setTodayAttendance(result);
+      setCheckSuccess('Checked in successfully!');
+      setTimeout(() => setCheckSuccess(''), 3000);
+    } catch (err) {
+      setCheckError(err.message || 'Failed to check in');
+      setTimeout(() => setCheckError(''), 5000);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCheckOut = async () => {
+    setActionLoading(true);
+    setCheckError('');
+    setCheckSuccess('');
+
+    try {
+      const result = await attendanceAPI.checkOut();
+      setTodayAttendance(result);
+      setCheckSuccess('Checked out successfully!');
+      setTimeout(() => setCheckSuccess(''), 3000);
+    } catch (err) {
+      setCheckError(err.message || 'Failed to check out');
+      setTimeout(() => setCheckError(''), 5000);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleBreak = () => setOnBreak(!onBreak);
 
   const formatTime = (date) => date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
   const formatDate = (date) => date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+  const isCheckedIn = todayAttendance?.check_in && !todayAttendance?.check_out;
+  const isCheckedOut = todayAttendance?.check_in && todayAttendance?.check_out;
+
   // === Loading State ===
   if (loading) return <div className="dashboard-loading"><div className="loader"></div><p>Loading Vortex...</p></div>;
 
-  // === DATA PREPARATION (Extracting from API response) ===
+  // === DATA PREPARATION ===
   const heatmapData = dashboardData?.heatmap_data || [];
   const pendingApprovals = dashboardData?.pending_approvals || [];
   const employeeTrends = dashboardData?.employee_trends || [];
@@ -102,7 +148,7 @@ const Dashboard = () => {
         <div className="welcome-card">
           <div className="welcome-content">
             <span className="welcome-badge"><Sparkles size={14} /> Welcome back</span>
-            <h1>Good {currentTime.getHours() < 12 ? 'Morning' : currentTime.getHours() < 17 ? 'Afternoon' : 'Evening'}, Admin! 👋</h1>
+            <h1>Good {currentTime.getHours() < 12 ? 'Morning' : currentTime.getHours() < 17 ? 'Afternoon' : 'Evening'}, {user?.name || 'Admin'}! 👋</h1>
             <p>{formatDate(currentTime)}</p>
           </div>
           <div className="welcome-illustration">
@@ -118,7 +164,7 @@ const Dashboard = () => {
               <span>{formatTime(currentTime)}</span>
             </div>
             <span className={`status-pill ${isCheckedIn ? 'active' : ''}`}>
-              {isCheckedIn ? '● Online' : '○ Offline'}
+              {isCheckedIn ? '● Working' : isCheckedOut ? '● Completed' : '○ Not Started'}
             </span>
           </div>
           <div className="checkin-body">
@@ -129,7 +175,17 @@ const Dashboard = () => {
                   <span className="timer-value">{workingTime}</span>
                 </div>
                 <div className="checkin-meta">
-                  <LogIn size={14} /> Started at {checkInTime?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  <LogIn size={14} /> Started at {todayAttendance?.check_in}
+                </div>
+              </>
+            ) : isCheckedOut ? (
+              <>
+                <div className="timer-display">
+                  <span className="timer-label">Completed</span>
+                  <span className="timer-value">{todayAttendance?.working_hours || '0h 0m'}</span>
+                </div>
+                <div className="checkin-meta">
+                  <CheckCircle size={14} /> Day completed
                 </div>
               </>
             ) : (
@@ -139,16 +195,28 @@ const Dashboard = () => {
               </div>
             )}
           </div>
+
+          {checkError && <div className="checkin-error">{checkError}</div>}
+          {checkSuccess && <div className="checkin-success">{checkSuccess}</div>}
+
           <div className="checkin-actions">
-            {!isCheckedIn ? (
-              <button className="btn-checkin-vortex" onClick={handleCheckIn}><Play size={16} /> Check In</button>
-            ) : (
+            {!todayAttendance?.check_in ? (
+              <button className="btn-checkin-vortex" onClick={handleCheckIn} disabled={actionLoading}>
+                <Play size={16} /> {actionLoading ? 'Checking In...' : 'Check In'}
+              </button>
+            ) : !todayAttendance?.check_out ? (
               <>
                 <button className={`btn-break-vortex ${onBreak ? 'active' : ''}`} onClick={handleBreak}>
                   <Coffee size={16} /> {onBreak ? 'Resume' : 'Break'}
                 </button>
-                <button className="btn-checkout-vortex" onClick={handleCheckOut}><LogOut size={16} /> Check Out</button>
+                <button className="btn-checkout-vortex" onClick={handleCheckOut} disabled={actionLoading}>
+                  <LogOut size={16} /> {actionLoading ? 'Checking Out...' : 'Check Out'}
+                </button>
               </>
+            ) : (
+              <div className="day-complete-badge">
+                <CheckCircle size={16} /> Day Complete
+              </div>
             )}
           </div>
         </div>
@@ -288,7 +356,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Reminders (Static for now) */}
+        {/* Reminders */}
         <div className="vortex-card reminders-card">
           <div className="card-header">
             <h3><Clock size={18} /> Reminders</h3>
@@ -324,8 +392,8 @@ const Dashboard = () => {
                 <defs>
                   {COLORS.map((color, i) => (
                     <linearGradient key={i} id={`gradient-${i}`} x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor={color} stopOpacity={1}/>
-                      <stop offset="100%" stopColor={color} stopOpacity={0.6}/>
+                      <stop offset="0%" stopColor={color} stopOpacity={1} />
+                      <stop offset="100%" stopColor={color} stopOpacity={0.6} />
                     </linearGradient>
                   ))}
                 </defs>
