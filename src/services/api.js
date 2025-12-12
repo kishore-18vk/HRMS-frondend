@@ -1,6 +1,6 @@
 const API_BASE_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:8000/api'  // Local development
-  : 'https://vortex18.onrender.com/api'; // Live Production
+  : 'https://vortex-hrms.onrender.com/api'; // Live Production
 
 // Helper to get auth headers
 const getAuthHeaders = () => {
